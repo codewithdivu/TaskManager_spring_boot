@@ -2,6 +2,7 @@ package com.example.taskmanager;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -24,7 +25,7 @@ public class TaskController {
     }
 
     @PostMapping("/json")
-    public TaskRequest createTask(@RequestBody TaskRequest request){
+    public TaskRequest createTask(@Valid @RequestBody TaskRequest request){
         return taskService.createTask(request);
     }
 }
