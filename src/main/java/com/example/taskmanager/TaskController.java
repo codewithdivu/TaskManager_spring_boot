@@ -17,24 +17,24 @@ public class TaskController {
     }
 
     @GetMapping
-    public List<Task> getAllTasks(){
+    public List<TaskEntity> getAllTasks(){
         return taskService.getAllTasks();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id){
-        return taskService.getTaskById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public TaskEntity getTaskById(@PathVariable Long id){
+        return taskService.getTaskById(id);
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskRequest request){
-        Task createdTask = taskService.createTask(request);
+    public ResponseEntity<TaskEntity> createTask(@Valid @RequestBody TaskRequest request){
+        TaskEntity createdTask = taskService.createTask(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request){
+    public ResponseEntity<TaskEntity> updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request){
         return taskService.updateTask(id,request).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -47,5 +47,20 @@ public class TaskController {
         }
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/incomplete")
+    public List<TaskEntity> getIncompleteTasks() {
+        return taskService.getIncompleteTasks();
+    }
+
+    @GetMapping("/search")
+    public List<TaskEntity> searchTasks(@RequestParam String title) {
+        return taskService.searchTasks(title);
+    }
+
+    @GetMapping("/count/incomplete")
+    public long countIncompleteTasks() {
+        return taskService.countIncompleteTasks();
     }
 }

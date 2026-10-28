@@ -1,35 +1,27 @@
 package com.example.taskmanager;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ProblemDetail> handleValidation(
-            MethodArgumentNotValidException ex) {
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ApiError> handleTaskNotFound(
+            TaskNotFoundException ex) {
 
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "One or more fields are invalid."
+        ApiError error = new ApiError(
+                404,
+                "Not Found",
+                ex.getMessage(),
+                Instant.now()
         );
 
-        problem.setTitle("Validation failed");
-
-        String message = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .findFirst()
-                .orElse("Invalid request");
-
-        problem.setProperty("errors", java.util.List.of(message));
-
-        return ResponseEntity.badRequest().body(problem);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(error);
     }
 }

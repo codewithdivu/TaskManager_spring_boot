@@ -1,50 +1,70 @@
 package com.example.taskmanager;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import javax.swing.text.html.Option;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
-
 
 @Service
 public class TaskService {
-    private final List<Task> tasks = new ArrayList<>();
-    private final AtomicLong nextId = new AtomicLong(1);
 
-    public List<Task> getAllTasks(){
-        return new ArrayList<>(tasks);
+    private final TaskRepository taskRepository;
+
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
     }
 
-    public Optional<Task> getTaskById(Long id){
-        return tasks.stream().filter(task -> task.id().equals(id)).findFirst();
+    public List<TaskEntity> getAllTasks() {
+        return taskRepository.findAll();
     }
 
-    public Task createTask(TaskRequest request){
-        Task task = new Task(nextId.getAndIncrement(),request.title(),request.completed());
-        tasks.add(task);
-        return task;
+    public TaskEntity getTaskById(Long id) {
+        return taskRepository.findById(id).orElseThrow(() -> new TaskNotFoundException(id));
     }
 
-    public Optional<Task> updateTask(Long id, TaskRequest request){
-        for(int i=0;i<tasks.size();i++){
-            if(tasks.get(i).id().equals(id)){
-                Task updatedTask = new Task(
-                        id,
-                        request.title(),
-                        request.completed()
-                );
-                tasks.set(i, updatedTask);
-                return Optional.of(updatedTask);
-            }
+    public TaskEntity createTask(TaskRequest request) {
+        TaskEntity task = new TaskEntity(
+                request.title(),
+                request.completed()
+        );
+
+        return taskRepository.save(task);
+    }
+
+    public Optional<TaskEntity> updateTask(
+            Long id,
+            TaskRequest request) {
+
+        return taskRepository.findById(id)
+                .map(existingTask -> {
+                    existingTask.setTitle(request.title());
+                    existingTask.setCompleted(request.completed());
+
+                    return taskRepository.save(existingTask);
+                });
+    }
+
+    public boolean deleteTask(Long id) {
+        if (!taskRepository.existsById(id)) {
+            return false;
         }
-        return Optional.empty();
+
+        taskRepository.deleteById(id);
+        return true;
     }
 
-    public boolean deleteTask(long id){
-        return tasks.removeIf(task -> task.id().equals(id));
+    public List<TaskEntity> getIncompleteTasks() {
+        return taskRepository.findByCompletedFalse();
+    }
+
+    public List<TaskEntity> getTasksByStatus(boolean completed) {
+        return taskRepository.findByCompleted(completed);
+    }
+
+    public List<TaskEntity> searchTasks(String title) {
+        return taskRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    public long countIncompleteTasks() {
+        return taskRepository.countByCompletedFalse();
     }
 }
